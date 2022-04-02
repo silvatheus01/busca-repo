@@ -11,69 +11,22 @@ class Principal extends Component{
     constructor(props){
         super(props)
         this.state = {
-            itens: []
+            itens: [],
+            termo: '',
+            showTable: false,
         };
     }
     
-    componentDidMount() {
-        let token;
-
-        fetch("token.txt").then(function(response) {
-        return response
-        }).then(function(data) {
-        token = data.text()
-        }).catch(function(err) {
-        console.log('Fetch problem show: ' + err.message);
-        });
-
-        // Create a personal access token at https://github.com/settings/tokens/new?scopes=repo
-        const octokit = new Octokit({ auth: 
-        token
-        });
-
-        const queryString = encodeURIComponent('programacao+in:name');
-
-        let getResponse = async (queryString) => {
-        return await octokit.request('GET /search/repositories', {
-            q: '20 in:name,description,readme',
-            page: 1,
-        })
-        }
-
-        getResponse(queryString).then((response) => this.setState({
-            itens: response.data.items 
-        }))
+    componentDidMount() {         
     
-        //console.log(getResponse)
-
-        const rows = [
-        { id: 1, col1: 'Hello', col2: 'World' },
-        { id: 2, col1: 'DataGridPro', col2: 'is Awesome' },
-        { id: 3, col1: 'MUI', col2: 'is Amazing' },
-        ];
-
-        const columns = [
-        { field: 'col1', headerName: 'Nome do repositório', width: 200 },
-        { field: 'col2', headerName: 'Descrição do Repositório', width: 200 },
-        { field: 'col3', headerName: 'Descrição do Repositório', width: 200 },
-        { field: 'col4', headerName: 'Nome do autor', width: 150 },
-        { field: 'col5', headerName: 'Linguagem do Repositório', width: 200 },
-        { field: 'col6', headerName: 'Número de Stars', width: 150 },
-        { field: 'col7', headerName: 'Número de Forks', width: 150 },
-        { field: 'col8', headerName: 'Data da última atualização', width: 200 },
-        ];
     }
-
-    render(){
-        return(
-            <div className='principal'>
-                <div className='input'>
-                    <TextField fullWidth id="outlined-basic" label="Pesquise aqui" variant="outlined" />
-                </div>
-                <div className='botao'>
-                    <Button variant="contained">Pesquisar</Button>
-                </div>
-                
+    
+    renderTable = () => {
+        if(this.state.showTable === false){
+            return <h1>Pesquise por algum termo</h1>
+        }else{              
+            
+            return(
                 <div className='resultado'>
                     <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
                     <TableHead>
@@ -104,6 +57,53 @@ class Principal extends Component{
                     </TableBody>
                     </Table>
                 </div>
+            );
+        }
+    }
+
+    handleOnClick(){
+
+        let token;
+
+        fetch("token.txt").then(function(response) {
+        return response
+        }).then(function(data) {
+        token = data.text()
+        }).catch(function(err) {
+        console.log('Fetch problem show: ' + err.message);
+        });
+
+        // Create a personal access token at https://github.com/settings/tokens/new?scopes=repo
+        const octokit = new Octokit({ auth: 
+            token
+        });
+
+
+        let getResponse = async (termo) => {
+            return await octokit.request('GET /search/repositories', {
+                q: termo + ' in:name,description,readme',
+                page: 1,
+            })
+        }
+    
+        getResponse(this.state.termo).then((response) => this.setState({
+            itens: response.data.items,
+            showTable: true,
+        }))            
+        
+    }
+    
+
+    render(){
+        return(
+            <div className='principal'>
+                <div className='input'>
+                    <TextField onChange={(e) => {this.setState({termo: e.target.value})}} fullWidth id="outlined-basic" label="Pesquise aqui" variant="outlined" />
+                </div>
+                <div className='botao'>
+                    <Button onClick={()=>this.handleOnClick()} variant="contained">Pesquisar</Button>
+                </div>
+                {this.renderTable()}                
             </div>
         );
     }
