@@ -39,6 +39,7 @@ class Principal extends Component{
         this.state = {
             itens: [],
             termo: '',
+            ultimoTermo: '',
             showTable: false,
             atualPag: 0,
             rowsPerPage: 0,
@@ -119,11 +120,18 @@ class Principal extends Component{
     
     renderTable = () => {
         if(this.state.showTable === false){
-            return <h1>Pesquise por algum termo</h1>
+            return(
+                <div className = 'aviso'>
+                    <h1>Pesquise por algum termo.</h1>
+                </div>
+            ); 
         }else{              
             return(
                 <div className='resultado'>
-                <TableContainer sx={{ maxHeight: 440 }}>
+                <div className = 'aviso'>
+                    <h1>Resultados para: "{this.state.ultimoTermo}"</h1>
+                </div>
+                <TableContainer>
                     <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
                         <TableHead>
                             <TableRow>
@@ -154,6 +162,7 @@ class Principal extends Component{
                         <TableFooter>
                             <TableRow>
                                 <TablePagination
+                                rowsPerPageOptions={[10, 25, 100]}
                                 count={this.state.numRows}
                                 rowsPerPage={this.state.rowsPerPage}
                                 page={this.state.atualPag}
@@ -173,6 +182,7 @@ class Principal extends Component{
 
     handleOnClick(){        
         this.setData({})
+        this.setState({ultimoTermo: this.state.termo})
     }
     
 
@@ -180,7 +190,8 @@ class Principal extends Component{
         return(
             <div className='principal'>
                 <div className='input'>
-                    <TextField onChange={(e) => {this.setState({termo: e.target.value})}} fullWidth id="outlined-basic" label="Pesquise aqui" variant="outlined" />
+                    <TextField helperText = {"Pesquise por um nome, descrição ou README de um repositório"} 
+                    onChange={(e) => {this.setState({termo: e.target.value})}} fullWidth id="outlined-basic" label="Pesquise aqui" variant="outlined" />
                 </div>
                 <div className='botao'>
                     <Button onClick={()=>this.handleOnClick()} variant="contained">Pesquisar</Button>

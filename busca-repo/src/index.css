@@ -23,7 +23,6 @@ code {
 }
 
 .input{
-  text-align: center;
   margin-top: 25px;
   width: 1000px;
   margin: 25px auto;
@@ -31,4 +30,14 @@ code {
 
 .botao{
   text-align: center;
+}
+
+.aviso{
+  text-align: center;
+}
+
+.MuiTableContainer-root{
+  margin: 0 auto;
+  margin-bottom: 25px;
+  
 }
