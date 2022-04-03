@@ -5,37 +5,20 @@ import {Component} from 'react';
 
 import {octokit} from "../token.js"
 
-function getNumPags(link){
-    
-    if(link === undefined){
-        return 1
+// Número maxima de "linhas" que a api pode retornar
+const MAX_ROWS = 1000
+
+function getNumRows(numRows){
+
+    if(numRows > MAX_ROWS){
+        return MAX_ROWS
+    }else{
+        return numRows
     }
-
-    // Pega o número da última página
-    let links = link.split(' ')
-    console.log(links)
-    let nums = links.map((link)=> {
-        let searchParams = new URLSearchParams(link)
-        return searchParams.get('page')                
-    })
-
-    nums = nums.filter((value)=>{
-        return value != null
-    })
-
-    console.log(nums)
-    
-    nums = nums.map((num)=>parseInt(num.replaceAll('>;', ''),10))
-
-    nums = nums.reduce((a, b) => {
-        return Math.max(a, b);
-    }, -Infinity);
-
-    return nums
     
 }
 
-function getNumRows(itens){
+function getRowsPerPage(itens){
     return itens.length
 }
 
@@ -47,9 +30,9 @@ class Principal extends Component{
             itens: [],
             termo: '',
             showTable: false,
-            numPags: 1,
             atualPag: 0,
-            numRows: 0
+            rowsPerPage: 0,
+            numRows: 30,
         };
     }
     
@@ -61,7 +44,7 @@ class Principal extends Component{
        
         var getResponse = async (dados) => {
 
-            let termo, pagina
+            let termo, pagina, rowsPerPage
 
             if(dados.termo === undefined){
                 termo = this.state.termo
@@ -71,15 +54,23 @@ class Principal extends Component{
 
             if(dados.pagina === undefined){
                 pagina = 1
+                this.setState({atualPag: 0})
             }else{
                 // Soma um por causa da diferenã entre page do octokit e o TablePagination
                 pagina = dados.pagina + 1
+            }
+
+            if(dados.rowsPerPage === undefined){
+                rowsPerPage = this.state.rowsPerPage
+            }else{
+                rowsPerPage = dados.rowsPerPage
             }
 
             console.log('Número da página de dentro de getResponse: ', pagina)
             return await octokit.request('GET /search/repositories', {
                 q: termo + ' in:name,description,readme sort:stars order:desc',
                 page: pagina,
+                per_page: rowsPerPage,
             })
             
         }
@@ -90,20 +81,28 @@ class Principal extends Component{
             this.setState({
                 itens: itens,
                 showTable: true,
-                numPags: getNumPags(response.headers.link),
-                numRows: getNumRows(itens)
+                numRows: getNumRows(response.data.total_count),
+                rowsPerPage: getRowsPerPage(itens)
             })     
             
-            console.log('Dentro de getResponse: ', getNumPags(response.headers.link))
+            console.log('Numero de linhas de dentro de getResponse: ', getNumRows(response.data.total_count))
         }) 
         
         
     
     }
 
+    handleChangeRowsPerPage(event){
+        let rowsPerPage = event.target.value
+        console.log(event)
+        this.setState({rowsPerPage:rowsPerPage, atualPag: 0})
+
+        this.setData({rowsPerPage: rowsPerPage})
+    }
+
     handleChangePage(event, page){
         this.setState({atualPag: page})
-        console.log('Número da página de dentro de handleChangePage: ', page)
+        console.log('Obj event de dentro de handleChangePage: ', event)
 
         this.setData({pagina:page})    
     }
@@ -144,10 +143,11 @@ class Principal extends Component{
                         <TableFooter>
                             <TableRow>
                                 <TablePagination
-                                count={this.state.numRows*this.state.numPags}
-                                rowsPerPage={this.state.numRows}
+                                count={this.state.numRows}
+                                rowsPerPage={this.state.rowsPerPage}
                                 page={this.state.atualPag}
                                 onPageChange={(event,page)=>this.handleChangePage(event,page)}
+                                onRowsPerPageChange={(event) => this.handleChangeRowsPerPage(event)}
                                 />
                             </TableRow>
                         </TableFooter>
