@@ -1,9 +1,19 @@
 import TextField from "@mui/material/TextField";
-import { TableCell,TableRow,Table,TableHead, Button, TableBody, TableFooter, TablePagination } from '@mui/material';
+import { TableCell,
+    TableRow,
+    Table,
+    TableHead, 
+    Button, 
+    TableBody, 
+    TableFooter, 
+    TablePagination,
+    TableContainer 
+} from '@mui/material';
 
 import {Component} from 'react';
 
 import {octokit} from "../token.js"
+import {StyledTableCell,StyledTableRow} from "./Style"
 
 // Número maxima de "linhas" que a api pode retornar
 const MAX_ROWS = 1000
@@ -113,21 +123,22 @@ class Principal extends Component{
         }else{              
             return(
                 <div className='resultado'>
+                <TableContainer sx={{ maxHeight: 440 }}>
                     <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
                         <TableHead>
                             <TableRow>
-                            <TableCell>Nome do repositório</TableCell>
-                            <TableCell align="right">Descrição do Repositório</TableCell>
-                            <TableCell align="right">Nome do autor</TableCell>
-                            <TableCell align="right">Linguagem do Repositório</TableCell>
-                            <TableCell align="right">Número de Stars</TableCell>
-                            <TableCell align="right">Número de Forks</TableCell>
-                            <TableCell align="right">Data da última atualização</TableCell>
+                            <StyledTableCell>Nome do repositório</StyledTableCell>
+                            <StyledTableCell align="right">Descrição do Repositório</StyledTableCell>
+                            <StyledTableCell align="right">Nome do autor</StyledTableCell>
+                            <StyledTableCell align="right">Linguagem do Repositório</StyledTableCell>
+                            <StyledTableCell align="right">Número de Stars</StyledTableCell>
+                            <StyledTableCell align="right">Número de Forks</StyledTableCell>
+                            <StyledTableCell align="right">Data da última atualização</StyledTableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {this.state.itens.map((row) => (
-                            <TableRow key={row.id}>
+                            <StyledTableRow key={row.id}>
                                 <TableCell component="th" scope="row">
                                 {row.name}
                                 </TableCell>
@@ -137,7 +148,7 @@ class Principal extends Component{
                                 <TableCell align="right">{row.stargazers_count}</TableCell>
                                 <TableCell align="right">{row.forks_count}</TableCell>
                                 <TableCell align="right">{row.updated_at}</TableCell>
-                            </TableRow>
+                            </StyledTableRow>
                             ))}
                         </TableBody>
                         <TableFooter>
@@ -152,6 +163,7 @@ class Principal extends Component{
                             </TableRow>
                         </TableFooter>
                     </Table>
+                    </TableContainer>
                 </div>
             );
         }
