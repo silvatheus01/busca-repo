@@ -11,14 +11,15 @@ import { TableCell,
 } from '@mui/material';
 
 import {Component} from 'react';
-
-import {octokit} from "../token.js"
 import {StyledTableCell,StyledTableRow} from "./Style"
+
+const axios = require('axios');
 
 // Número maxima de "linhas" que a api pode retornar
 const MAX_ROWS = 1000
 
 const DEFAULT_ROWS_PER_PAGE = 10
+
 
 function getNumRows(numRows){
 
@@ -34,7 +35,7 @@ function getRowsPerPage(itens){
     return itens.length
 }
 
-function getrowsPerPageOptions(numRows){
+function getRowsPerPageOptions(numRows){
     if(numRows <= DEFAULT_ROWS_PER_PAGE){
         return [numRows]
     }else{
@@ -86,18 +87,20 @@ class Principal extends Component{
             }
 
             if(dados.rowsPerPage === undefined){               
-                rowsPerPage = DEFAULT_ROWS_PER_PAGE
+                rowsPerPage = this.state.rowsPerPage
             }else{
                 rowsPerPage = dados.rowsPerPage
             }
 
             console.log('Número da página de dentro de getResponse: ', pagina)
-            return await octokit.request('GET /search/repositories', {
-                q: termo + ' in:name,description,readme sort:stars order:desc',
-                page: pagina,
-                per_page: rowsPerPage,
-            })
-            
+            try{
+                return await axios.get('https://api.github.com/search/repositories?q='+ termo 
+                +'+in:name&sort=stars&per_page='+rowsPerPage
+                +'&page='+pagina)
+            }catch(error) {
+                console.error(error);
+
+            }
         }
     
         getResponse(dados).then((response) => {
@@ -184,7 +187,7 @@ class Principal extends Component{
                             <TableFooter>
                                 <TableRow>
                                     <TablePagination
-                                    rowsPerPageOptions={getrowsPerPageOptions(this.state.numRows)}
+                                    rowsPerPageOptions={getRowsPerPageOptions(this.state.numRows)}
                                     count={this.state.numRows}
                                     rowsPerPage={this.state.rowsPerPage}
                                     page={this.state.atualPag}
@@ -215,7 +218,7 @@ class Principal extends Component{
         return(
             <div className='principal'>
                 <div className='input'>
-                    <TextField helperText = {"Pesquise por um nome, descrição ou README de um repositório"} 
+                    <TextField helperText = {"Pesquise pelo nome de um repositório"} 
                     onChange={(e) => {this.setState({termo: e.target.value})}} fullWidth id="outlined-basic" label="Pesquise aqui" variant="outlined" />
                 </div>
                 <div className='botao'>
