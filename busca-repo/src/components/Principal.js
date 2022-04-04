@@ -18,6 +18,8 @@ import {StyledTableCell,StyledTableRow} from "./Style"
 // Número maxima de "linhas" que a api pode retornar
 const MAX_ROWS = 1000
 
+const DEFAULT_ROWS_PER_PAGE = 10
+
 function getNumRows(numRows){
 
     if(numRows > MAX_ROWS){
@@ -32,6 +34,18 @@ function getRowsPerPage(itens){
     return itens.length
 }
 
+function getrowsPerPageOptions(numRows){
+    if(numRows <= DEFAULT_ROWS_PER_PAGE){
+        return [numRows]
+    }else{
+        if(numRows%DEFAULT_ROWS_PER_PAGE !== 0){
+            return [DEFAULT_ROWS_PER_PAGE,numRows%DEFAULT_ROWS_PER_PAGE]
+        }else{
+            return [DEFAULT_ROWS_PER_PAGE]
+        }            
+    }
+}
+
 
 class Principal extends Component{
     constructor(props){
@@ -42,8 +56,8 @@ class Principal extends Component{
             ultimoTermo: '',
             showTable: false,
             atualPag: 0,
-            rowsPerPage: 0,
-            numRows: 30,
+            rowsPerPage: DEFAULT_ROWS_PER_PAGE,
+            numRows: 0,
         };
     }
     
@@ -71,8 +85,8 @@ class Principal extends Component{
                 pagina = dados.pagina + 1
             }
 
-            if(dados.rowsPerPage === undefined){
-                rowsPerPage = this.state.rowsPerPage
+            if(dados.rowsPerPage === undefined){               
+                rowsPerPage = DEFAULT_ROWS_PER_PAGE
             }else{
                 rowsPerPage = dados.rowsPerPage
             }
@@ -125,64 +139,75 @@ class Principal extends Component{
                     <h1>Pesquise por algum termo.</h1>
                 </div>
             ); 
-        }else{              
-            return(
-                <div className='resultado'>
-                <div className = 'aviso'>
-                    <h1>Resultados para: "{this.state.ultimoTermo}"</h1>
-                </div>
-                <TableContainer>
-                    <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
-                        <TableHead>
-                            <TableRow>
-                            <StyledTableCell>Nome do repositório</StyledTableCell>
-                            <StyledTableCell align="right">Descrição do Repositório</StyledTableCell>
-                            <StyledTableCell align="right">Nome do autor</StyledTableCell>
-                            <StyledTableCell align="right">Linguagem do Repositório</StyledTableCell>
-                            <StyledTableCell align="right">Número de Stars</StyledTableCell>
-                            <StyledTableCell align="right">Número de Forks</StyledTableCell>
-                            <StyledTableCell align="right">Data da última atualização</StyledTableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {this.state.itens.map((row) => (
-                            <StyledTableRow key={row.id}>
-                                <TableCell component="th" scope="row">
-                                {row.name}
-                                </TableCell>
-                                <TableCell align="right">{row.description}</TableCell>
-                                <TableCell align="right">{row.owner.login}</TableCell>
-                                <TableCell align="right">{row.language}</TableCell>
-                                <TableCell align="right">{row.stargazers_count}</TableCell>
-                                <TableCell align="right">{row.forks_count}</TableCell>
-                                <TableCell align="right">{row.updated_at}</TableCell>
-                            </StyledTableRow>
-                            ))}
-                        </TableBody>
-                        <TableFooter>
-                            <TableRow>
-                                <TablePagination
-                                rowsPerPageOptions={[10, 25, 100]}
-                                count={this.state.numRows}
-                                rowsPerPage={this.state.rowsPerPage}
-                                page={this.state.atualPag}
-                                onPageChange={(event,page)=>this.handleChangePage(event,page)}
-                                onRowsPerPageChange={(event) => this.handleChangeRowsPerPage(event)}
-                                />
-                            </TableRow>
-                        </TableFooter>
-                    </Table>
-                    </TableContainer>
-                </div>
-            );
+        }else{
+            if(this.state.itens.length === 0){
+                return(
+                    <div className = 'aviso'>
+                        <h1>Nada foi encontrado pelo termo: "{this.state.ultimoTermo}"</h1>
+                    </div>
+                );
+            }else{
+                return(
+                
+                    <div className='resultado'>
+                    <div className = 'aviso'>
+                        <h1>Resultados para: "{this.state.ultimoTermo}"</h1>
+                    </div>
+                    <TableContainer>
+                        <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
+                            <TableHead>
+                                <TableRow>
+                                <StyledTableCell>Nome do repositório</StyledTableCell>
+                                <StyledTableCell align="right">Descrição do Repositório</StyledTableCell>
+                                <StyledTableCell align="right">Nome do autor</StyledTableCell>
+                                <StyledTableCell align="right">Linguagem do Repositório</StyledTableCell>
+                                <StyledTableCell align="right">Número de Stars</StyledTableCell>
+                                <StyledTableCell align="right">Número de Forks</StyledTableCell>
+                                <StyledTableCell align="right">Data da última atualização</StyledTableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {this.state.itens.map((row) => (
+                                <StyledTableRow key={row.id}>
+                                    <TableCell component="th" scope="row">
+                                    {row.name}
+                                    </TableCell>
+                                    <TableCell align="right">{row.description}</TableCell>
+                                    <TableCell align="right">{row.owner.login}</TableCell>
+                                    <TableCell align="right">{row.language}</TableCell>
+                                    <TableCell align="right">{row.stargazers_count}</TableCell>
+                                    <TableCell align="right">{row.forks_count}</TableCell>
+                                    <TableCell align="right">{row.updated_at}</TableCell>
+                                </StyledTableRow>
+                                ))}
+                            </TableBody>
+                            <TableFooter>
+                                <TableRow>
+                                    <TablePagination
+                                    rowsPerPageOptions={getrowsPerPageOptions(this.state.numRows)}
+                                    count={this.state.numRows}
+                                    rowsPerPage={this.state.rowsPerPage}
+                                    page={this.state.atualPag}
+                                    onPageChange={(event,page)=>this.handleChangePage(event,page)}
+                                    onRowsPerPageChange={(event) => this.handleChangeRowsPerPage(event)}
+                                    />
+                                </TableRow>
+                            </TableFooter>
+                        </Table>
+                        </TableContainer>
+                    </div>
+                );
+            }              
+            
         }
     }
 
     
 
     handleOnClick(){        
-        this.setData({})
         this.setState({ultimoTermo: this.state.termo})
+        this.setData({})
+        
     }
     
 
