@@ -12,7 +12,7 @@ import { TableCell,
 } from '@mui/material';
 
 import {Component} from 'react';
-import {StyledTableCell,StyledTableRow} from "./Style"
+import {StyledTableCell,StyledTableRow} from "../style"
 
 const axios = require('axios');
 
