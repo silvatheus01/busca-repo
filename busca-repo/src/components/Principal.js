@@ -145,9 +145,7 @@ class Principal extends Component{
                     // Caso contrário, concatenamos a próxima página de itens aos itens encontrados anteriormente
                     this.setState({itens: this.state.itens.concat(itens)})
                 }            
-            })
-
-            
+            })       
                 
         }  
 
@@ -244,6 +242,7 @@ class Principal extends Component{
             tablePage: 0,
             novaPequisa: true,
             termo: termo,
+            rowsPerPage: MAX_ROWS_PER_PAGE
         })       
         this.setData({apiPage: FIRST_PAGE_API})          
     }
