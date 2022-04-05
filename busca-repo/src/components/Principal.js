@@ -41,6 +41,8 @@ function getItens(numRows,itens,atualPag,rowsPerPage){
         }
 }
 
+var novoTermo;
+
 class Principal extends Component{
     constructor(props){
         super(props)
@@ -54,10 +56,9 @@ class Principal extends Component{
             numRows: 0,
             novaPequisa: true,
         };
-    }
-    
-    
 
+
+    }    
     
 
     getRowsPerPageOptions(){
@@ -83,17 +84,25 @@ class Principal extends Component{
     
     }*/
 
-    setData = (dados) => {    
-       
-        var getResponse = async (dados) => {
-            
-            let termo, pagina, rowsPerPage
+    setData = (dados) => {   
+        
+        let novaPequisa 
 
-            if(dados.termo === undefined){
-                termo = this.state.termo
-            }else{
-                termo = dados.termo
-            }
+
+        /*if(dados.termo === undefined){
+            termo = this.state.termo
+        }else{
+            termo = dados.termo
+        }*/
+
+        console.log("nova pesquisa dentro de setData=", novaPequisa)
+       
+        let getResponse = async (dados) => {
+
+            console.log("Entrei em getResponse")
+            
+            let pagina, rowsPerPage
+
 
             if(dados.pagina === undefined){
                 pagina = 1
@@ -109,9 +118,11 @@ class Principal extends Component{
                 rowsPerPage = dados.rowsPerPage
             }
 
+            console.log("Termo: ",this.state.termo)
+
             console.log('Número da página de dentro de getResponse: ', pagina)
             try{
-                return await axios.get('https://api.github.com/search/repositories?q='+ termo 
+                return await axios.get('https://api.github.com/search/repositories?q='+ this.state.termo
                     +'+in:name&sort=stars&per_page='+DEFAULT_NUM_RESULTS
                     +'&page=' + this.getPage()
                 ) 
@@ -123,31 +134,39 @@ class Principal extends Component{
         console.log('pagina*rowsPerPage = ', this.state.atualPag*this.state.rowsPerPage)
         console.log('Tamanho de itens: ', this.state.itens.length)
 
+        console.log("novaPesquisa=", novaPequisa)
+
         if(this.state.atualPag*this.state.rowsPerPage + this.state.rowsPerPage >= this.state.itens.length
-            || this.state.novaPequisa){
+        || this.state.termo !== this.state.ultimoTermo){
+
             getResponse(dados).then((response) => {
-                console.log(response)
+
                 let itens = response.data.items
+                console.log(response)
+                
                 this.setState({
                     
                     showTable: true,
                     numRows: getNumRows(response.data.total_count),
-                   
+                    //ultimoTermo: this.state.termo,
+                    
 
                     //rowsPerPage: this.state.rowsPerPage
-                })   
+                })                                         
+                //this.setState({itens: itens})   
                 
-                if(this.state.novaPequisa === false){
-                    this.setState({itens: this.state.itens.concat(itens)})
-                }else{
+                // Trocar this.state.termo por outra variavel por cauda dessas linhas
+                if(this.state.novaPequisa === true){
                     this.setState({itens: itens, novaPequisa: false})
+                }else{
+                    this.setState({itens: this.state.itens.concat(itens)})
                 }
 
                 console.log('Numero de linhas de dentro de getResponse: ', getNumRows(response.data.total_count))
+            
             })
-            
-            
-        }
+                
+        }  
 
     }
 
@@ -160,6 +179,7 @@ class Principal extends Component{
     }
 
     handleChangeRowsPerPage(event){
+        console.log("Entrou em handleChangeRowsPerPage")
         let rowsPerPage = event.target.value
         console.log(event)
         this.setState({rowsPerPage:rowsPerPage, atualPag: 0})
@@ -182,13 +202,13 @@ class Principal extends Component{
                 </div>
             ); 
         }else{
-            /*if(this.state.itens.length === 0){
+            if(this.state.itens.length === 0){
                 return(
                     <div className = 'aviso'>
                         <h1>Nada foi encontrado pelo termo: "{this.state.ultimoTermo}"</h1>
                     </div>
                 );
-            }else{*/
+            }else{
                 return(
                 
                     <div className='resultado'>
@@ -243,22 +263,25 @@ class Principal extends Component{
                         </TableContainer>
                     </div>
                 );
-            //}              
+            }              
             
         }
     }
 
     
 
-    handleOnClick(){        
+    handleOnClick(){    
+        let novaPequisa = true
+        console.log("Entrou em handleOnClick")    
         this.setState({
             ultimoTermo: this.state.termo,
-            //atualPag: 0,
-            //itens: []
+            atualPag: 0,
+            novaPequisa: true,
         })
-        this.setData({})     
+        console.log("novaPesquisa dentro de handleOnClick:", novaPequisa)
+        this.setData({novoTermo: novoTermo})     
         
-        this.setState({novaPequisa: true})
+        //this.setState({novaPequisa: true})
     }
     
 
@@ -267,7 +290,7 @@ class Principal extends Component{
             <div className='principal'>
                 <div className='input'>
                     <TextField helperText = {"Pesquise pelo nome de um repositório"} 
-                    onChange={(e) => {this.setState({termo: e.target.value})}} fullWidth id="outlined-basic" label="Pesquise aqui" variant="outlined" />
+                    onChange={(e) => {this.setState({termo: e.target.value })}} fullWidth id="outlined-basic" label="Pesquise aqui" variant="outlined" />
                 </div>
                 <div className='botao'>
                     <Button onClick={()=>this.handleOnClick()} variant="contained">Pesquisar</Button>
