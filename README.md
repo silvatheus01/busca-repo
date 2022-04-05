@@ -7,10 +7,10 @@ de estrelas que possuem em ordem decrescente.
 - [Axios](https://axios-http.com/) para as requisições a API
 - [Material-UI](https://mui.com/pt/) para estilização do front-end
 
-# Como rodar a aplicação
+## Como rodar a aplicação
 Acesse o diretório `busca-repo` para encontrar informações sobre como executar a aplicação.
 
-# Referências utilizadas a API do Github
+## Referências utilizadas a API do Github
 - https://docs.github.com/pt/rest/reference/search
 - https://docs.github.com/pt/search-github/searching-on-github/searching-for-repositories
 - https://docs.github.com/pt/rest/guides/traversing-with-pagination
