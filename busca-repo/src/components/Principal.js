@@ -20,6 +20,7 @@ const MAX_ROWS = 1000
 
 const DEFAULT_ROWS_PER_PAGE = 10
 
+const DEFAULT_NUM_RESULTS = 100
 
 function getNumRows(numRows){
 
@@ -28,25 +29,17 @@ function getNumRows(numRows){
     }else{
         return numRows
     }
-    
 }
 
-function getRowsPerPage(itens){
-    return itens.length
-}
-
-function getRowsPerPageOptions(numRows){
-    if(numRows <= DEFAULT_ROWS_PER_PAGE){
-        return [numRows]
-    }else{
-        if(numRows%DEFAULT_ROWS_PER_PAGE !== 0){
-            return [DEFAULT_ROWS_PER_PAGE,numRows%DEFAULT_ROWS_PER_PAGE]
+function getItens(numRows,itens,atualPag,rowsPerPage){
+    console.log('numRows de dentro de getItens é: ',numRows)
+        if(numRows > DEFAULT_ROWS_PER_PAGE){
+            return itens.slice(atualPag*rowsPerPage, 
+                atualPag*rowsPerPage+rowsPerPage)
         }else{
-            return [DEFAULT_ROWS_PER_PAGE]
-        }            
-    }
+            return itens
+        }
 }
-
 
 class Principal extends Component{
     constructor(props){
@@ -59,17 +52,41 @@ class Principal extends Component{
             atualPag: 0,
             rowsPerPage: DEFAULT_ROWS_PER_PAGE,
             numRows: 0,
+            novaPequisa: true,
         };
     }
     
-    componentDidMount() {         
-       
+    
+
+    
+
+    getRowsPerPageOptions(){
+        if(this.state.numRows <= DEFAULT_ROWS_PER_PAGE){
+            return [this.state.numRows]
+        }else{
+            if(this.state.numRows%DEFAULT_ROWS_PER_PAGE !== 0){
+                return [DEFAULT_ROWS_PER_PAGE,this.state.numRows%DEFAULT_ROWS_PER_PAGE]
+            }else{
+                return [DEFAULT_ROWS_PER_PAGE]
+            }            
+        }
     }
 
-    setData = (dados) => {   
+    /*getItens(){
+        console.log('numRows de dentro de getItens é: ', this.state.numRows)
+        if(this.state.numRows > DEFAULT_ROWS_PER_PAGE){
+            return this.state.itens.slice(this.state.atualPag*this.state.rowsPerPage, 
+                this.state.atualPag*this.state.rowsPerPage+this.state.rowsPerPage)
+        }else{
+            return this.state.itens
+        }
+    
+    }*/
+
+    setData = (dados) => {    
        
         var getResponse = async (dados) => {
-
+            
             let termo, pagina, rowsPerPage
 
             if(dados.termo === undefined){
@@ -95,29 +112,51 @@ class Principal extends Component{
             console.log('Número da página de dentro de getResponse: ', pagina)
             try{
                 return await axios.get('https://api.github.com/search/repositories?q='+ termo 
-                +'+in:name&sort=stars&per_page='+rowsPerPage
-                +'&page='+pagina)
+                    +'+in:name&sort=stars&per_page='+DEFAULT_NUM_RESULTS
+                    +'&page=' + this.getPage()
+                ) 
             }catch(error) {
                 console.error(error);
-
             }
         }
-    
-        getResponse(dados).then((response) => {
-            console.log(response)
-            let itens = response.data.items
-            this.setState({
-                itens: itens,
-                showTable: true,
-                numRows: getNumRows(response.data.total_count),
-                rowsPerPage: getRowsPerPage(itens)
-            })     
+
+        console.log('pagina*rowsPerPage = ', this.state.atualPag*this.state.rowsPerPage)
+        console.log('Tamanho de itens: ', this.state.itens.length)
+
+        if(this.state.atualPag*this.state.rowsPerPage + this.state.rowsPerPage >= this.state.itens.length
+            || this.state.novaPequisa){
+            getResponse(dados).then((response) => {
+                console.log(response)
+                let itens = response.data.items
+                this.setState({
+                    
+                    showTable: true,
+                    numRows: getNumRows(response.data.total_count),
+                   
+
+                    //rowsPerPage: this.state.rowsPerPage
+                })   
+                
+                if(this.state.novaPequisa === false){
+                    this.setState({itens: this.state.itens.concat(itens)})
+                }else{
+                    this.setState({itens: itens, novaPequisa: false})
+                }
+
+                console.log('Numero de linhas de dentro de getResponse: ', getNumRows(response.data.total_count))
+            })
             
-            console.log('Numero de linhas de dentro de getResponse: ', getNumRows(response.data.total_count))
-        }) 
-        
-        
-    
+            
+        }
+
+    }
+
+    getPage(){
+        if(this.state.itens.length > 0){
+            return Math.floor(this.state.itens.length/DEFAULT_NUM_RESULTS)
+        }else{
+            return 1
+        }
     }
 
     handleChangeRowsPerPage(event){
@@ -143,13 +182,13 @@ class Principal extends Component{
                 </div>
             ); 
         }else{
-            if(this.state.itens.length === 0){
+            /*if(this.state.itens.length === 0){
                 return(
                     <div className = 'aviso'>
                         <h1>Nada foi encontrado pelo termo: "{this.state.ultimoTermo}"</h1>
                     </div>
                 );
-            }else{
+            }else{*/
                 return(
                 
                     <div className='resultado'>
@@ -170,7 +209,11 @@ class Principal extends Component{
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {this.state.itens.map((row) => (
+                                {getItens(
+                                    this.state.numRows,
+                                    this.state.itens,
+                                    this.state.atualPag,
+                                    this.state.rowsPerPage).map((row) => (
                                 <StyledTableRow key={row.id}>
                                     <TableCell component="th" scope="row">
                                     {row.name}
@@ -187,7 +230,7 @@ class Principal extends Component{
                             <TableFooter>
                                 <TableRow>
                                     <TablePagination
-                                    rowsPerPageOptions={getRowsPerPageOptions(this.state.numRows)}
+                                    rowsPerPageOptions={this.getRowsPerPageOptions()}
                                     count={this.state.numRows}
                                     rowsPerPage={this.state.rowsPerPage}
                                     page={this.state.atualPag}
@@ -200,7 +243,7 @@ class Principal extends Component{
                         </TableContainer>
                     </div>
                 );
-            }              
+            //}              
             
         }
     }
@@ -208,9 +251,14 @@ class Principal extends Component{
     
 
     handleOnClick(){        
-        this.setState({ultimoTermo: this.state.termo})
-        this.setData({})
+        this.setState({
+            ultimoTermo: this.state.termo,
+            //atualPag: 0,
+            //itens: []
+        })
+        this.setData({})     
         
+        this.setState({novaPequisa: true})
     }
     
 
