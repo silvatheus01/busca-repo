@@ -7,7 +7,8 @@ import { TableCell,
     TableBody, 
     TableFooter, 
     TablePagination,
-    TableContainer 
+    TableContainer,
+    CircularProgress,
 } from '@mui/material';
 
 import {Component} from 'react';
@@ -31,7 +32,7 @@ function getNumRows(numRows){
     }
 }
 
-function getItens(numRows,itens,atualPag,rowsPerPage){
+/*function getItens(numRows,itens,atualPag,rowsPerPage){
     console.log('numRows de dentro de getItens é: ',numRows)
         if(numRows > DEFAULT_ROWS_PER_PAGE){
             return itens.slice(atualPag*rowsPerPage, 
@@ -39,9 +40,9 @@ function getItens(numRows,itens,atualPag,rowsPerPage){
         }else{
             return itens
         }
-}
+}*/
 
-var novoTermo;
+var termo;
 
 class Principal extends Component{
     constructor(props){
@@ -55,10 +56,23 @@ class Principal extends Component{
             rowsPerPage: DEFAULT_ROWS_PER_PAGE,
             numRows: 0,
             novaPequisa: true,
+            isLoading: false,
+            apiPage:1,
         };
 
 
     }    
+
+
+    getItens(){
+        console.log('numRows de dentro de getItens é: ',this.state.numRows)
+            if(this.state.numRows > DEFAULT_ROWS_PER_PAGE){
+                return this.state.itens.slice(this.state.atualPag*this.state.rowsPerPage, 
+                    this.state.atualPag*this.state.rowsPerPage+this.state.rowsPerPage)
+            }else{
+                return this.state.itens
+            }
+    }
     
 
     getRowsPerPageOptions(){
@@ -73,20 +87,9 @@ class Principal extends Component{
         }
     }
 
-    /*getItens(){
-        console.log('numRows de dentro de getItens é: ', this.state.numRows)
-        if(this.state.numRows > DEFAULT_ROWS_PER_PAGE){
-            return this.state.itens.slice(this.state.atualPag*this.state.rowsPerPage, 
-                this.state.atualPag*this.state.rowsPerPage+this.state.rowsPerPage)
-        }else{
-            return this.state.itens
-        }
-    
-    }*/
-
     setData = (dados) => {   
         
-        let novaPequisa 
+        let novaPequisa, apiPage
 
 
         /*if(dados.termo === undefined){
@@ -99,6 +102,8 @@ class Principal extends Component{
        
         let getResponse = async (dados) => {
 
+            this.setState({isLoading: true})
+
             console.log("Entrei em getResponse")
             
             let pagina, rowsPerPage
@@ -106,6 +111,7 @@ class Principal extends Component{
 
             if(dados.pagina === undefined){
                 pagina = 1
+                apiPage = 1
                 this.setState({atualPag: 0})
             }else{
                 // Soma um por causa da diferenã entre page do octokit e o TablePagination
@@ -118,17 +124,36 @@ class Principal extends Component{
                 rowsPerPage = dados.rowsPerPage
             }
 
+            if(dados.apiPage === undefined){
+                apiPage = this.state.apiPage
+            }else{
+                apiPage = 1
+            }
+
             console.log("Termo: ",this.state.termo)
 
             console.log('Número da página de dentro de getResponse: ', pagina)
+
+            console.log("novaPesquisa dentro de getResponse: ",this.state.novaPequisa)
+
+           /* if(this.state.novaPequisa === false){
+                this.setState({apiPage:this.state.apiPage+1})
+            }else{
+                this.setState({apiPage:1})
+            }*/
+
+           console.log("apiPage dentro de getResponse: ",apiPage)
+
             try{
-                return await axios.get('https://api.github.com/search/repositories?q='+ this.state.termo
+                return await axios.get('https://api.github.com/search/repositories?q='+ termo
                     +'+in:name&sort=stars&per_page='+DEFAULT_NUM_RESULTS
-                    +'&page=' + this.getPage()
+                    +'&page=' + apiPage
                 ) 
             }catch(error) {
                 console.error(error);
             }
+
+            this.setState({isLoading: false})
         }
 
         console.log('pagina*rowsPerPage = ', this.state.atualPag*this.state.rowsPerPage)
@@ -137,7 +162,7 @@ class Principal extends Component{
         console.log("novaPesquisa=", novaPequisa)
 
         if(this.state.atualPag*this.state.rowsPerPage + this.state.rowsPerPage >= this.state.itens.length
-        || this.state.termo !== this.state.ultimoTermo){
+        || termo !== this.state.ultimoTermo){  
 
             getResponse(dados).then((response) => {
 
@@ -148,7 +173,9 @@ class Principal extends Component{
                     
                     showTable: true,
                     numRows: getNumRows(response.data.total_count),
-                    //ultimoTermo: this.state.termo,
+                    isLoading: false,
+                    ultimoTermo: termo,
+                    apiPage: apiPage+1
                     
 
                     //rowsPerPage: this.state.rowsPerPage
@@ -162,21 +189,25 @@ class Principal extends Component{
                     this.setState({itens: this.state.itens.concat(itens)})
                 }
 
+                
+
                 console.log('Numero de linhas de dentro de getResponse: ', getNumRows(response.data.total_count))
             
             })
+
+            
                 
         }  
 
     }
 
-    getPage(){
+    /*getPage(){
         if(this.state.itens.length > 0){
             return Math.floor(this.state.itens.length/DEFAULT_NUM_RESULTS)
         }else{
             return 1
         }
-    }
+    }*/
 
     handleChangeRowsPerPage(event){
         console.log("Entrou em handleChangeRowsPerPage")
@@ -229,11 +260,7 @@ class Principal extends Component{
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {getItens(
-                                    this.state.numRows,
-                                    this.state.itens,
-                                    this.state.atualPag,
-                                    this.state.rowsPerPage).map((row) => (
+                                {this.getItens().map((row) => (
                                 <StyledTableRow key={row.id}>
                                     <TableCell component="th" scope="row">
                                     {row.name}
@@ -268,20 +295,36 @@ class Principal extends Component{
         }
     }
 
-    
-
     handleOnClick(){    
-        let novaPequisa = true
+       
         console.log("Entrou em handleOnClick")    
         this.setState({
-            ultimoTermo: this.state.termo,
+            // ultimo termo já está contido em this.state.termo
+            //ultimoTermo: this.state.termo,
             atualPag: 0,
             novaPequisa: true,
+            //isLoading: true,
+            termo: termo,
+            //apiPage: 1,
         })
-        console.log("novaPesquisa dentro de handleOnClick:", novaPequisa)
-        this.setData({novoTermo: novoTermo})     
+
+        console.log("state em handleOnClick", this.state)
+
+       // console.log("apiPage dentro de handleOnClick: ", this.state.apiPage)
+        
+        this.setData({apiPage: 1})     
         
         //this.setState({novaPequisa: true})
+    }
+
+    renderButton = () =>{
+        if(this.state.isLoading){
+            return (
+                <CircularProgress/>
+            )
+        }else{
+            return <Button onClick={()=>this.handleOnClick()} variant="contained">Pesquisar</Button>
+        }   
     }
     
 
@@ -290,10 +333,10 @@ class Principal extends Component{
             <div className='principal'>
                 <div className='input'>
                     <TextField helperText = {"Pesquise pelo nome de um repositório"} 
-                    onChange={(e) => {this.setState({termo: e.target.value })}} fullWidth id="outlined-basic" label="Pesquise aqui" variant="outlined" />
+                    onChange={(e) => {/*this.setState({termo: e.target.value })*/termo = e.target.value}} fullWidth id="outlined-basic" label="Pesquise aqui" variant="outlined" />
                 </div>
                 <div className='botao'>
-                    <Button onClick={()=>this.handleOnClick()} variant="contained">Pesquisar</Button>
+                    {this.renderButton()}
                 </div>
                 {this.renderTable()}                
             </div>
